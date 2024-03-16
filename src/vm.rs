@@ -29,7 +29,7 @@ pub fn get_proc_size(process: &lm_process_t) -> lm_size_t {
 
     let modules = LM_EnumModulesEx(&process);
     for module in modules.unwrap() {
-        if module.get_name() == "sekiro.exe" {
+        if module.get_name() == "sekiro" {
             println!("===============================================");
             println!("MODULE_NAME: \t{}", module.get_name());
             println!("MODULE_BASE: \t0x{:x}", module.get_base());
@@ -52,10 +52,23 @@ pub fn get_signature_address(
     let sig_address = LM_SigScanEx(proc, sig, gamedata::IMAGE_BASE, proc_size);
 
     match sig_address {
-        Some(_addr) => {
-            //let sig_address = Some((addr as isize + offset as isize) as usize);
+        Some(addr) => {
             return sig_address;
         }
         None => None,
     }
+}
+
+pub fn find_page_from_addr(
+    process: &lm_process_t,
+    address: &lm_address_t,
+) -> Result<lm_page_t, &'static str> {
+    for page in LM_EnumPagesEx(&process).unwrap() {
+        let page_base = page.get_base();
+        let page_end = page.get_end();
+        if page_base <= *address && page_end >= *address {
+            return Ok(page);
+        }
+    }
+    Err("page for address {address} could not be found.")
 }

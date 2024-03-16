@@ -1,4 +1,9 @@
 #![allow(dead_code)]
+use std::time;
+
+use libmem::*;
+
+use crate::vm;
 
 pub const IMAGE_BASE: usize = 0x140000000;
 pub const PROCESS_NAME: &str = "sekiro.exe";
@@ -36,6 +41,51 @@ pub mod patterns {
 
     pub const DRAGONROT_EFFECT: &str = "";
     pub const DRAGONROT_EFFECT_OFFSET: i32 = 13;
+}
+
+pub struct Addresses {
+    framelock: lm_address_t,
+    framelock_speed: lm_address_t,
+    fov: lm_address_t,
+}
+
+pub struct Game {
+    process: lm_process_t,
+    size: usize,
+}
+
+impl Game {
+    pub fn new(process_name: &str) -> Game {
+        let game = Game {
+            process: find_process(process_name),
+            size: vm::get_proc_size(&find_process(process_name)),
+        };
+
+        game
+    }
+
+    pub fn get_process(&self) -> lm_process_t {
+        self.process
+    }
+
+    pub fn get_size(&self) -> usize {
+        self.size
+    }
+}
+
+fn find_process(process_name: &str) -> lm_process_t {
+    let delay = time::Duration::from_millis(500);
+
+    loop {
+        match vm::get_pid(process_name) {
+            Some(val) => {
+                return LM_GetProcessEx(val).unwrap();
+            }
+            None => {
+                println!("waiting for sekiro.exe...");
+            }
+        };
+    }
 }
 
 const FRAMELOCK_SPEED_FIX_MATRIX: [f32; 35] = [
