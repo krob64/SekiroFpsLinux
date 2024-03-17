@@ -1,0 +1,8 @@
+put pages inside Game struct, enumerating pages once on startup instead of every time we want to write to r/rx sections.
+
+fix seemingly random crashes. sometimes the desired page couldn't be found, othertimes the signature could not be found.
+sometimes only the patcher crashes, othertimes it also takes the game down with it.
+
+start implementing the fov option.
+
+start implementing the deathrot option.

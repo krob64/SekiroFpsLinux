@@ -1,5 +1,5 @@
 #![allow(dead_code)]
-use std::time;
+use std::{thread::sleep, time};
 
 use libmem::*;
 
@@ -15,6 +15,14 @@ pub mod patterns {
     pub const FRAMELOCK_SPEED_FIX: &str =
         "F3 0F 58 ?? 0F C6 ?? 00 0F 51 ?? F3 0F 59 ?? ?? ?? ?? ?? 0F 2F";
     pub const FRAMELOCK_SPEED_FIX_OFFSET: i32 = 15;
+
+    /*
+     * offset is 19 because the pointer in this instruction
+     * 00000001407D4F48 | F3:0F5905 E8409202           | mulss xmm0,dword ptr ds:[1430F9038]                   | pFrametimeRunningSpeed->fFrametimeCriticalRunningSpeed
+     * actually consists of [rip + (FRAMELOCK_SPEED_FIX + FRAMELOCK_SPEED_FIX_OFFSET)]
+     * the distance between FRAMELOCK_SPEED_FIX and rip is 19 bytes.
+     * */
+    pub const FRAMELOCK_SPEED_FIX_INSTR_OFFSET: i32 = 19;
 
     pub const FOV: &str = "";
     pub const FOV_OFFSET: i32 = 8;
@@ -58,7 +66,7 @@ impl Game {
     pub fn new(process_name: &str) -> Game {
         let game = Game {
             process: find_process(process_name),
-            size: vm::get_proc_size(&find_process(process_name)),
+            size: 0,
         };
 
         game
@@ -85,6 +93,8 @@ fn find_process(process_name: &str) -> lm_process_t {
                 println!("waiting for sekiro.exe...");
             }
         };
+
+        sleep(delay);
     }
 }
 
