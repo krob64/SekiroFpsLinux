@@ -1,7 +1,8 @@
 use crate::gamedata;
+use core::time;
 use libmem::*;
 use log::{error, info, warn};
-use std::process::Command;
+use std::{process::Command, thread::sleep};
 
 pub fn get_pid(process_name: &str) -> Option<lm_pid_t> {
     let mut input = Command::new("sh");
@@ -66,46 +67,79 @@ pub fn get_signature_address(proc: &lm_process_t, sig: &str) -> Option<lm_addres
     //     None => None,
     // }
     info!("attempting to get sig for: {}", sig);
-    for page in LM_EnumPagesEx(&proc).unwrap() {
-        let prot = page.get_prot();
-        // if prot == LM_PROT_X || prot == LM_PROT_XRW || prot == LM_PROT_XR || prot == LM_PROT_XW {
-        //     proc_size += page.get_size();
-        // }
-        if page.get_base() < gamedata::IMAGE_BASE {
-            continue;
-        }
 
-        match prot {
-            LM_PROT_XR | LM_PROT_X | LM_PROT_XW | LM_PROT_XRW => {
-                let sig_address = LM_SigScanEx(&proc, sig, page.get_base(), page.get_size());
-                match sig_address {
-                    Some(address) => {
-                        return Some(address);
+    let mut miss_count = 0;
+    let sleep_dur = time::Duration::from_millis(100);
+    loop {
+        match LM_EnumPagesEx(&proc) {
+            Some(pages) => {
+                for page in pages {
+                    let prot = page.get_prot();
+                    if page.get_base() < gamedata::IMAGE_BASE {
+                        continue;
                     }
-                    None => {}
+
+                    match prot {
+                        LM_PROT_XR | LM_PROT_X | LM_PROT_XW | LM_PROT_XRW => {
+                            let sig_address =
+                                LM_SigScanEx(&proc, sig, page.get_base(), page.get_size());
+                            match sig_address {
+                                Some(address) => {
+                                    return Some(address);
+                                }
+                                None => {}
+                            }
+                        }
+                        _ => {}
+                    }
                 }
             }
-            _ => {}
+            None => {
+                error!("sig LM_EnumPagesEx() returned nothing.")
+            }
         }
+        miss_count += 1;
+        warn!("addr for sig \"{sig}\" not found. retrying... [{miss_count}]");
+        sleep(sleep_dur);
     }
-
-    warn!("sig [{sig}] not found.");
-    return None;
 }
 
 pub fn find_page_from_addr(
     process: &lm_process_t,
     address: &lm_address_t,
 ) -> Result<lm_page_t, &'static str> {
-    for page in LM_EnumPagesEx(&process).unwrap() {
-        let page_base = page.get_base();
-        let page_end = page.get_end();
-        if page_base <= *address && page_end >= *address {
-            return Ok(page);
+    let mut miss_count = 0;
+    let sleep_dur = time::Duration::from_millis(100);
+    loop {
+        // for page in LM_EnumPagesEx(&process).unwrap() {
+        //     let page_base = page.get_base();
+        //     let page_end = page.get_end();
+        //     if page_base <= *address && page_end >= *address {
+        //         return Ok(page);
+        //     }
+        // }
+
+        match LM_EnumPagesEx(&process) {
+            Some(pages) => {
+                for page in pages {
+                    let page_base = page.get_base();
+                    let page_end = page.get_end();
+                    if page_base <= *address && page_end >= *address {
+                        return Ok(page);
+                    }
+                }
+            }
+            None => {
+                error!("find_page LM_EnumPagesEx() returned nothing.")
+            }
         }
+        miss_count += 1;
+        warn!(
+            "page for addr 0x{:x} not found, retrying... [{miss_count}]",
+            address
+        );
+        sleep(sleep_dur);
     }
-    error!("page for address 0x{:X} could not be found.", address);
-    Err("page for address {address} could not be found.")
 }
 
 pub fn pause_target(process_name: &str) -> Result<(), &'static str> {

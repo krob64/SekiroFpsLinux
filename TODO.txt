@@ -5,4 +5,4 @@ sometimes only the patcher crashes, othertimes it also takes the game down with 
 
 start implementing the fov option.
 
-start implementing the deathrot option.
+start implementing the dragonrot option.
