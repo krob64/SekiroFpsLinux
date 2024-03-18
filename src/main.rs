@@ -1,3 +1,4 @@
+mod fov;
 mod fps_unlock;
 mod gamedata;
 mod vm;
@@ -8,8 +9,8 @@ struct Args {
     #[arg(short, long, default_value_t = 120)]
     max_fps: u32,
 
-    #[arg(short, long, default_value_t = 120.0)]
-    fov: f32,
+    #[arg(short, long, default_value_t = 0)]
+    fov: i32,
 }
 
 fn main() -> Result<(), &'static str> {
@@ -19,7 +20,8 @@ fn main() -> Result<(), &'static str> {
     env_logger::init();
     let sekiro = gamedata::Game::new(gamedata::PROCESS_NAME);
 
-    fps_unlock::patch(&sekiro, args.max_fps)?;
+    //fps_unlock::patch(&sekiro, args.max_fps)?;
+    fov::patch(&sekiro, args.fov)?;
 
     println!("frame_rate: {}", args.max_fps);
     println!("fov: \t{}", args.fov);

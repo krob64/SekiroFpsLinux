@@ -26,6 +26,20 @@ pub fn get_pid(process_name: &str) -> Option<lm_pid_t> {
     return None;
 }
 
+// pub fn find_pages(process: &lm_process_t) -> Vec<lm_page_t> {
+//     let mut miss_counter = 0;
+//     loop {
+//         match LM_EnumPagesEx(&process) {
+//             Some(pages) => {
+//                 return pages;
+//             }
+//             None => {}
+//         }
+//         miss_counter += 1;
+//         error!("find_pages LM_EnumPagesEx() returned nothing. [{miss_counter}]");
+//     }
+// }
+
 // pub fn get_proc_size(process: &lm_process_t) -> lm_size_t {
 //     let mut proc_size: usize = 0;
 //
@@ -103,6 +117,22 @@ pub fn get_signature_address(proc: &lm_process_t, sig: &str) -> Option<lm_addres
         sleep(sleep_dur);
     }
 }
+
+// pub fn find_page_from_addr_t(
+//     address: &lm_address_t,
+//     game: &gamedata::Game,
+// ) -> Result<lm_page_t, &'static str> {
+//     for page in game.get_pages() {
+//         let page_base = page.get_base();
+//         let page_end = page.get_end();
+//         if page_base <= *address && page_end >= *address {
+//             return Ok(*page);
+//         }
+//     }
+//
+//     error!("page for address 0x{:X} not found.", address);
+//     return Err("find_page_from_addr_t error");
+// }
 
 pub fn find_page_from_addr(
     process: &lm_process_t,

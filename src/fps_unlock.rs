@@ -29,6 +29,7 @@ fn patch_framelock(game: &Game, fps: u32) -> Result<(), &'static str> {
 
     info!("framelock page: {}", framelock_page);
 
+    let init_protect = framelock_page.get_prot();
     let old_protect = match LM_ProtMemoryEx(
         &game.get_process(),
         framelock_page.get_base(),
@@ -55,14 +56,7 @@ fn patch_framelock(game: &Game, fps: u32) -> Result<(), &'static str> {
         &game.get_process(),
         framelock_page.get_base(),
         framelock_page.get_size(),
-        old_protect,
-    );
-
-    let framelock_page = vm::find_page_from_addr(&game.get_process(), &framelock_sig)?;
-
-    info!(
-        "framelock pageprot after write: {}",
-        framelock_page.get_prot()
+        init_protect,
     );
 
     Ok(())
@@ -95,6 +89,7 @@ fn patch_framespeed(game: &Game, fps: u32) -> Result<(), &'static str> {
     info!("framespeed page: {}", page);
     info!("framespeed address: 0x{:X}", framespeed_address);
 
+    let init_protect = page.get_prot();
     let old_protect = match LM_ProtMemoryEx(
         &game.get_process(),
         page.get_base(),
@@ -120,12 +115,8 @@ fn patch_framespeed(game: &Game, fps: u32) -> Result<(), &'static str> {
         &game.get_process(),
         page.get_base(),
         page.get_size(),
-        old_protect,
+        init_protect,
     );
-
-    let page = vm::find_page_from_addr(&game.get_process(), &framespeed_address)?;
-
-    info!("framespeed pageprot after write: {}", page.get_prot());
 
     Ok(())
 }

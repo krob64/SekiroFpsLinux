@@ -24,7 +24,7 @@ pub mod patterns {
      * */
     pub const FRAMELOCK_SPEED_FIX_INSTR_OFFSET: i32 = 19;
 
-    pub const FOV: &str = "";
+    pub const FOV: &str = "F3 0F 10 08 F3 0F 59 0D ?? ?? ?? ?? F3 0F 5C 4E";
     pub const FOV_OFFSET: i32 = 8;
 
     pub const CAMADJUST_PITCH: &str = "";
@@ -51,22 +51,14 @@ pub mod patterns {
     pub const DRAGONROT_EFFECT_OFFSET: i32 = 13;
 }
 
-pub struct Addresses {
-    framelock: lm_address_t,
-    framelock_speed: lm_address_t,
-    fov: lm_address_t,
-}
-
 pub struct Game {
     process: lm_process_t,
-    size: usize,
 }
 
 impl Game {
     pub fn new(process_name: &str) -> Game {
         let game = Game {
             process: find_process(process_name),
-            size: 0,
         };
 
         game
@@ -76,9 +68,9 @@ impl Game {
         self.process
     }
 
-    pub fn get_size(&self) -> usize {
-        self.size
-    }
+    // pub fn get_pages(&self) -> &Vec<lm_page_t> {
+    //     &self.pages
+    // }
 }
 
 fn find_process(process_name: &str) -> lm_process_t {
