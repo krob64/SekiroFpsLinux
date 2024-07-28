@@ -10,7 +10,7 @@ This tool requires [libmem 4](https://github.com/rdbo/libmem) to be installed on
 
 1. Clone the repo
 ```
-$ git clone https://github.com/krob64/sekirofpsunlocker
+$ git clone https://github.com/krob64/sekirofpslinux
 ```
 
 2. Compile the binary
