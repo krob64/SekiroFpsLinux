@@ -59,7 +59,7 @@ fn patch_framelock(game: &Game, fps: u32) -> Result<(), &'static str> {
         init_protect,
     );
 
-    Ok(())
+    return Ok(());
 }
 
 fn patch_framespeed(game: &Game, fps: u32) -> Result<(), &'static str> {

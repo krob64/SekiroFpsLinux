@@ -20,7 +20,12 @@ fn main() -> Result<(), &'static str> {
     env_logger::init();
     let sekiro = gamedata::Game::new(gamedata::PROCESS_NAME);
 
-    //fps_unlock::patch(&sekiro, args.max_fps)?;
+    fps_unlock::patch(&sekiro, args.max_fps)?;
+
+    /*
+     * it seems like increasing fov leads to rendering artifacts all over the place
+     * i don't know if this behavior is also present on windows
+     */
     fov::patch(&sekiro, args.fov)?;
 
     println!("frame_rate: {}", args.max_fps);

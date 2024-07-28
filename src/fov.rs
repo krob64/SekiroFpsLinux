@@ -22,7 +22,6 @@ pub fn patch(game: &Game, fov: i32) -> Result<(), &'static str> {
     }
 
     let page = vm::find_page_from_addr(&game.get_process(), &fov_address)?;
-    //let init_protect = page.get_prot();
 
     LM_ProtMemoryEx(
         &game.get_process(),

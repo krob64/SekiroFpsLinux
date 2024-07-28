@@ -9,20 +9,36 @@ pub const IMAGE_BASE: usize = 0x140000000;
 pub const PROCESS_NAME: &str = "sekiro.exe";
 
 pub mod patterns {
+
+    /**
+       <float>fFrameTick determines default frame rate limit in seconds.
+                                  these bytes represent the games deltatime and therefore need to be overwritten by our own deltatime
+                                  vvvvvvvv
+       0000000141161FCD | C743 18 8988883C             | mov dword ptr ds:[rbx+18],3C888889                    | fFrameTick
+       0000000141161FD4 | 4C:89AB 70020000             | mov qword ptr ds:[rbx+270],r13                        |
+
+       0000000141161694 (Version 1.2.0.0)
+    */
     pub const FRAMELOCK_FUZZY: &str = "C7 43 ?? ?? ?? ?? ?? 4C 89 AB";
     pub const FRAMELOCK_OFFSET: i32 = 3;
 
+    /**
+       Reference pointer pFrametimeRunningSpeed to speed table entry that gets used in calculations.
+       Add or remove multiplications of 4bytes to pFrametimeRunningSpeed address to use a higher or lower <float>fFrametimeCriticalRunningSpeed from table.
+       fFrametimeCriticalRunningSpeed should be roughly half the frame rate: 30 @ 60FPS limit, 50 @ 100FPS limit...
+       00000001407D4F3D | F3:0F58D0                    | addss xmm2,xmm0                                       |
+       00000001407D4F41 | 0FC6D2 00                    | shufps xmm2,xmm2,0                                    |
+       00000001407D4F45 | 0F51C2                       | sqrtps xmm0,xmm2                                      |
+                                                                                  this address is the result of [rip+029240E8]
+                                                                                  vvvvvvvvv
+       00000001407D4F48 | F3:0F5905 E8409202           | mulss xmm0,dword ptr ds:[1430F9038]                   | pFrametimeRunningSpeed->fFrametimeCriticalRunningSpeed
+       00000001407D4F50 | 0F2FF8                       | comiss xmm7,xmm0                                      |
+
+       00000001407D4E08 (Version 1.2.0.0)
+    */
     pub const FRAMELOCK_SPEED_FIX: &str =
         "F3 0F 58 ?? 0F C6 ?? 00 0F 51 ?? F3 0F 59 ?? ?? ?? ?? ?? 0F 2F";
     pub const FRAMELOCK_SPEED_FIX_OFFSET: i32 = 15;
-
-    /*
-     * offset is 19 because the pointer in this instruction
-     * 00000001407D4F48 | F3:0F5905 E8409202           | mulss xmm0,dword ptr ds:[1430F9038]                   | pFrametimeRunningSpeed->fFrametimeCriticalRunningSpeed
-     * actually consists of [rip + (FRAMELOCK_SPEED_FIX + FRAMELOCK_SPEED_FIX_OFFSET)]
-     * the distance between FRAMELOCK_SPEED_FIX and rip is 19 bytes.
-     * */
-    pub const FRAMELOCK_SPEED_FIX_INSTR_OFFSET: i32 = 19;
 
     pub const FOV: &str = "F3 0F 10 08 F3 0F 59 0D ?? ?? ?? ?? F3 0F 5C 4E";
     pub const FOV_OFFSET: i32 = 8;
@@ -67,10 +83,6 @@ impl Game {
     pub fn get_process(&self) -> lm_process_t {
         self.process
     }
-
-    // pub fn get_pages(&self) -> &Vec<lm_page_t> {
-    //     &self.pages
-    // }
 }
 
 fn find_process(process_name: &str) -> lm_process_t {
